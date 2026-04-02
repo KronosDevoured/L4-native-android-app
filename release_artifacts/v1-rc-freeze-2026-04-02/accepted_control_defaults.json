@@ -1,0 +1,36 @@
+{
+  "snapshotDate": "2026-04-02",
+  "source": "SettingsManager defaults",
+  "physics": {
+    "maxAccelPitchDeg": 733.0,
+    "maxAccelYawDeg": 528.0,
+    "maxAccelRollDeg": 898.0,
+    "damp": 2.96,
+    "dampDar": 4.35
+  },
+  "controls": {
+    "touchDeadzone": 0.09,
+    "gameSpeed": 1.0,
+    "airRollIsToggle": false,
+    "darStateDefault": 0,
+    "touchDarDirectionDefault": -1,
+    "gpLeftStickDeadzone": 0.15,
+    "gpRightStickDeadzone": 0.15,
+    "gpBindToggleDar": "KEYCODE_BUTTON_B",
+    "gpBindAirRollLeft": "KEYCODE_BUTTON_R1",
+    "gpBindAirRollRight": "KEYCODE_BUTTON_L1",
+    "gpBindRollFree": "KEYCODE_BUTTON_R2"
+  },
+  "freeBranchModel": {
+    "horizontal": "roll only",
+    "rollSign": "+Math.signum(jx)",
+    "yawSuppressed": true,
+    "vertical": "pitch unchanged"
+  },
+  "regressionCritical": [
+    "FAR left/right roll direction",
+    "FAR diagonal behavior",
+    "FAR release transition",
+    "DAR left/right behavior"
+  ]
+}

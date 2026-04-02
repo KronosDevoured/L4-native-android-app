@@ -1,0 +1,88 @@
+plugins {
+    id 'com.android.application'
+}
+
+import java.util.Locale
+import java.util.Properties
+
+def signingProperties = new Properties()
+def signingPropertiesFile = rootProject.file('key.properties')
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.withInputStream { stream ->
+        signingProperties.load(stream)
+    }
+}
+
+def releaseStoreFile = signingProperties.getProperty('storeFile') ?: System.getenv('L4DAR_STORE_FILE')
+def releaseStorePassword = signingProperties.getProperty('storePassword') ?: System.getenv('L4DAR_STORE_PASSWORD')
+def releaseKeyAlias = signingProperties.getProperty('keyAlias') ?: System.getenv('L4DAR_KEY_ALIAS')
+def releaseKeyPassword = signingProperties.getProperty('keyPassword') ?: System.getenv('L4DAR_KEY_PASSWORD')
+def hasReleaseSigning = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+
+def isReleaseBuildRequested = gradle.startParameter.taskNames.any { taskName ->
+    def normalized = taskName.toLowerCase(Locale.ROOT)
+    normalized.contains('release') || normalized.contains('bundle') || normalized.contains('publish')
+}
+
+if (isReleaseBuildRequested && !hasReleaseSigning) {
+    throw new GradleException(
+        "Release signing is not configured. Provide key.properties (storeFile, storePassword, keyAlias, keyPassword) " +
+            "or L4DAR_STORE_FILE/L4DAR_STORE_PASSWORD/L4DAR_KEY_ALIAS/L4DAR_KEY_PASSWORD environment variables."
+    )
+}
+
+android {
+    namespace 'com.l4dar.nativeapp'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.l4dar.nativeapp"
+        minSdk 29
+        targetSdk 35
+        versionCode 1
+        versionName "0.1.0"
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseSigning) {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled true
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
+}
+
+dependencies {
+    // Test dependencies
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.robolectric:robolectric:4.11.1'
+}
