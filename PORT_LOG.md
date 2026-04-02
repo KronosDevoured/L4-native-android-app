@@ -3276,3 +3276,27 @@ User-selected policy for this milestone:
 
 1. Inconsistent FAR behavior perception remains (notably Scenario 2 result vs later Scenario 4/5 pass observations in same run).
 2. Suggested follow-up: one additional short confirmation run focused on Scenario 2 repeatability under clean FREE-active logs.
+
+## V1 Freeze Lock (2026-04-02)
+
+### RC baseline tag and artifacts
+
+1. Baseline tag: v1-rc-freeze-2026-04-02
+2. Baseline commit: f584dfc
+3. Validated APK archived at release_artifacts/v1-rc-freeze-2026-04-02/app-debug-validated.apk
+4. SHA256 archived at release_artifacts/v1-rc-freeze-2026-04-02/app-debug-validated.sha256.txt
+5. Accepted control defaults exported at release_artifacts/v1-rc-freeze-2026-04-02/accepted_control_defaults.json
+
+### Regression-critical behavior lock
+
+Treat these as regression-critical for V1:
+1. FAR horizontal left/right behavior under FREE
+2. FAR diagonal behavior
+3. FAR release transition behavior
+4. Directional DAR left/right behavior
+
+### Freeze policy
+
+1. Freeze control math for V1.
+2. Do not change FAR or DAR control model unless explicitly approved for V2 feature work.
+3. Any control change after this point requires a full six-scenario rerun and explicit acceptance sign-off.
