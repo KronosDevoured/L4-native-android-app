@@ -25,6 +25,7 @@ public final class SettingsManager {
     private static final String KEY_NIGHT_MODE = "nightMode";
     private static final String KEY_GP_LEFT_STICK_DEADZONE = "gpLeftStickDeadzone";
     private static final String KEY_GP_RIGHT_STICK_DEADZONE = "gpRightStickDeadzone";
+    private static final String KEY_STICK_SIZE = "stickSize";
 
     // Bindable gamepad action keys
     private static final String KEY_GP_BIND_STEER_X = "gpBindSteerX";
@@ -55,6 +56,7 @@ public final class SettingsManager {
     private int touchDarDirection = -1;
     private float gpLeftStickDeadzone = 0.15f;
     private float gpRightStickDeadzone = 0.15f;
+    private int stickSize = 100;
 
     // Gamepad binding defaults aligned to the web source parity audit
     private int gpBindSteerX = MotionEvent.AXIS_X;
@@ -92,6 +94,7 @@ public final class SettingsManager {
         nightMode = prefs.getBoolean(KEY_NIGHT_MODE, false);
         gpLeftStickDeadzone = clamp(prefs.getFloat(KEY_GP_LEFT_STICK_DEADZONE, 0.15f), 0.0f, 0.5f);
         gpRightStickDeadzone = clamp(prefs.getFloat(KEY_GP_RIGHT_STICK_DEADZONE, 0.15f), 0.0f, 0.5f);
+        stickSize = clampInt(prefs.getInt(KEY_STICK_SIZE, 100), 60, 180);
         darState = prefs.getInt(KEY_DAR_STATE, 0);
         int loadedTouchDarDirection = prefs.getInt(KEY_TOUCH_DAR_DIRECTION, -1);
         if (loadedTouchDarDirection < -1 || loadedTouchDarDirection > 1) {
@@ -127,6 +130,7 @@ public final class SettingsManager {
             .putBoolean(KEY_NIGHT_MODE, nightMode)
             .putFloat(KEY_GP_LEFT_STICK_DEADZONE, gpLeftStickDeadzone)
             .putFloat(KEY_GP_RIGHT_STICK_DEADZONE, gpRightStickDeadzone)
+            .putInt(KEY_STICK_SIZE, stickSize)
             .putInt(KEY_DAR_STATE, darState)
             .putInt(KEY_TOUCH_DAR_DIRECTION, touchDarDirection)
             .putInt(KEY_GP_BIND_STEER_X, gpBindSteerX)
@@ -240,6 +244,14 @@ public final class SettingsManager {
         gpRightStickDeadzone = clamp(value, 0.0f, 0.5f);
     }
 
+    public int getStickSize() {
+        return stickSize;
+    }
+
+    public void setStickSize(int value) {
+        stickSize = clampInt(value, 60, 180);
+    }
+
     public int getGpBindToggleDar() {
         return gpBindToggleDar;
     }
@@ -286,6 +298,10 @@ public final class SettingsManager {
     }
 
     private static float clamp(float value, float min, float max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    private static int clampInt(int value, int min, int max) {
         return Math.max(min, Math.min(max, value));
     }
 }

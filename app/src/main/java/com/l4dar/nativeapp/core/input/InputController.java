@@ -14,6 +14,7 @@ import com.l4dar.nativeapp.core.settings.SettingsManager;
  */
 public class InputController {
     private static final String TAG = "InputController";
+    private static final float DEFAULT_TOUCH_BASE_RADIUS_DP = 50f;
 
     private final SettingsManager settings;
     private final TouchJoystick leftJoystick;
@@ -28,6 +29,7 @@ public class InputController {
     private int displayRotation = Surface.ROTATION_0;
     private int lastLoggedDarState = Integer.MIN_VALUE;
     private InputSource lastLoggedSource = null;
+    private float lastLayoutDensity = 1f;
 
     private InputSource inputSource = InputSource.TOUCH; // Default
 
@@ -52,11 +54,12 @@ public class InputController {
         if (density <= 0f) {
             density = 1f;
         }
+        lastLayoutDensity = density;
 
         // All sizes are in dp; multiply by density to get physical pixels.
         float margin = 120f * density;
         float innerPad = 80f * density;
-        float baseRadius = 50f * density;
+        float baseRadius = getConfiguredTouchBaseRadius(density);
 
         leftJoystick.setPosition(margin + innerPad, screenHeight - margin);
         leftJoystick.setBaseRadius(baseRadius);
@@ -67,6 +70,16 @@ public class InputController {
             screenWidth - (margin + innerPad),
             screenHeight - margin
         );
+    }
+
+    public void applyConfiguredStickSize() {
+        leftJoystick.setBaseRadius(getConfiguredTouchBaseRadius(lastLayoutDensity));
+    }
+
+    private float getConfiguredTouchBaseRadius(float density) {
+        float safeDensity = density <= 0f ? 1f : density;
+        float sizeScale = settings.getStickSize() / 100f;
+        return (DEFAULT_TOUCH_BASE_RADIUS_DP * safeDensity) * sizeScale;
     }
 
     public boolean onTouchEvent(MotionEvent event) {
