@@ -10,6 +10,39 @@ _Last updated: 2026-06-04_
 3. Applied mapping to touch joystick radius only: `(stickSize / 100f) * (50dp * density)`.
 4. At `stickSize=100`, baseline radius remains `50dp * density`.
 
+## Sprint C / Ticket U51 - REN-002 Show Circle Semantic Audit (2026-06-04)
+
+### Closure note
+1. Web `Show Circle` controls tornado circle visualization semantics.
+2. Android currently has no equivalent tornado/DAR spin indicator visual target.
+3. Decision: classify as a direct parity gap and defer implementation until a correct visual target exists.
+
+## Sprint C / Ticket U52 - REN-002 Show Arrow Semantic Audit (2026-06-04)
+
+### Closure note
+1. Web `Show Arrow` controls the front-face arrow visualization.
+2. Web `Arrow Size` scales that same front-face arrow visualization.
+3. Web `Show Arrow` is visual-only and does not affect gameplay/input behavior.
+4. Android currently has no equivalent front-face arrow render path.
+5. Android touch joystick/DAR button visuals are not semantic matches.
+6. `Show Arrow` remains deferred until the correct front-face arrow visualization exists.
+7. `Arrow Size` remains blocked until `Show Arrow`/front-face arrow exists.
+
+## REN-002 status (approved)
+
+1. Zoom:Covered for now by approved Android camera enhancement.
+2. Not strict web parity.
+3. Do not add a web-style Zoom slider unless explicitly reopened.
+4. Stick Size:Complete.
+5. Show Circle:Direct parity gap.
+6. Deferred until Android has the correct tornado/DAR spin-indicator visualization path.
+7. Do not gate touch joystick circles or touch DAR button circles.
+8. Show Arrow:Direct parity gap.
+9. Blocked/deferred until Android has the correct front-face arrow visualization path.
+10. Do not gate touch joystick/DAR button visuals.
+11. Arrow Size:Blocked/deferred until Show Arrow/front-face arrow exists.
+12. Minimal UI:Intentionally deferred.
+
 ## Purpose
 
 This file records the current Android port state using the categories required by `PORT_SPEC.md`:
