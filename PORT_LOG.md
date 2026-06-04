@@ -2,6 +2,20 @@
 
 _Last updated: 2026-06-04_
 
+## Sprint C / Ticket U51 - REN-002 Show Circle Semantic Feasibility Audit (2026-06-04)
+
+### REN-002 status correction (documentation only)
+1. Zoom: Covered for now by approved Android camera enhancement.
+2. Not strict web parity.
+3. Do not add a web-style Zoom slider unless explicitly reopened.
+4. Stick Size: Complete.
+5. Show Circle: Direct parity gap.
+6. Deferred until Android has the correct tornado/DAR spin-indicator visualization path.
+7. Do not gate touch joystick circles or touch DAR button circles.
+8. Show Arrow: Needs semantic audit before classification or implementation.
+9. Arrow Size: Blocked pending Show Arrow semantic audit.
+10. Minimal UI: Intentionally deferred.
+
 ## Sprint C / Ticket U50 - REN-002 Stick Size Narrow Implementation (2026-06-04)
 
 ### Closure note
