@@ -10,3 +10,8 @@ captures/
 key.properties
 *.jks
 *.keystore
+
+# Generated perf artifacts
+release_artifacts/**/heap_snapshots/*.hprof
+release_artifacts/**/perf-baseline-*.json
+release_artifacts/**/perf-baseline-*.md
