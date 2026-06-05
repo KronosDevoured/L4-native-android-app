@@ -49,6 +49,7 @@ public final class MainActivity extends Activity {
     private static final int DAY_BUTTON_ACTIVE = Color.parseColor("#3D74B8");
     private static final int NIGHT_BUTTON_ACTIVE = Color.parseColor("#4C86CF");
     private static final int DEFAULT_STICK_SIZE = 100;
+    private static final long BACK_EXIT_ARM_TIMEOUT_MS = 2500L;
 
     private L4SurfaceView surfaceView;
     private SettingsManager settingsManager;
@@ -66,6 +67,7 @@ public final class MainActivity extends Activity {
     private AlertDialog exitConfirmationDialog;
     private OnBackInvokedCallback backInvokedCallback;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
+    private final Runnable disarmBackExitRunnable = () -> backExitArmed = false;
     private final Runnable darBadgeRefresh = new Runnable() {
         @Override
         public void run() {
@@ -750,11 +752,12 @@ public final class MainActivity extends Activity {
         }
 
         if (!backExitArmed) {
-            backExitArmed = true;
+            armBackExitState();
             Toast.makeText(this, "Press Back again to exit", Toast.LENGTH_SHORT).show();
             return;
         }
 
+        cancelBackExitArmTimeout();
         showExitConfirmationDialog();
     }
 
@@ -824,6 +827,7 @@ public final class MainActivity extends Activity {
         }
 
         exitingFromDialog = false;
+        cancelBackExitArmTimeout();
         pauseGameplayForExitDialog();
         exitConfirmationDialog = new AlertDialog.Builder(this)
             .setTitle("Leave app?")
@@ -881,6 +885,17 @@ public final class MainActivity extends Activity {
 
     private void clearBackExitState() {
         backExitArmed = false;
+        cancelBackExitArmTimeout();
+    }
+
+    private void armBackExitState() {
+        backExitArmed = true;
+        cancelBackExitArmTimeout();
+        uiHandler.postDelayed(disarmBackExitRunnable, BACK_EXIT_ARM_TIMEOUT_MS);
+    }
+
+    private void cancelBackExitArmTimeout() {
+        uiHandler.removeCallbacks(disarmBackExitRunnable);
     }
 
     @Override

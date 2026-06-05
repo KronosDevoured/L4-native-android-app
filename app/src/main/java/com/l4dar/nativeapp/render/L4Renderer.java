@@ -166,10 +166,6 @@ public final class L4Renderer implements GLSurfaceView.Renderer {
     }
 
     private void updateCameraLook(InputSnapshot input, float deltaTime) {
-        if (!settingsManager.isGpRightStickSteerEnabled()) {
-            return;
-        }
-
         cameraYaw   += input.rightStickX * CAMERA_LOOK_SPEED * deltaTime;
         cameraPitch -= input.rightStickY * CAMERA_LOOK_SPEED * deltaTime;
 
