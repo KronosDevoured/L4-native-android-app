@@ -3,7 +3,7 @@
 ## Build & Deploy in 30 Seconds
 
 ```powershell
-cd C:\Users\itsju\Documents\L4-dar-prototype\android-native-l4
+cd C:\Users\itsju\Documents\L4-native-android-app
 .\gradlew.bat assembleDebug && .\gradlew.bat installDebug
 ```
 
@@ -30,6 +30,14 @@ Then open the L4 Native app on your Samsung device.
 1. **ANDROID_NATIVE_SESSION_REPORT.md** - Start here (overview + next steps)
 2. **BUILD_STATUS.md** - Architecture & troubleshooting
 3. **TOUCH_INPUT_DEBUG_SUMMARY.md** - Input system investigation
+
+## Pre-Implementation Check (Required)
+
+Before adding features/systems, validate:
+
+1. The change does not silently rewrite user bindings/settings on launch.
+2. Any gameplay action remains bindable to any supported button/trigger/axis.
+3. The change supports final product behavior rather than short-term convenience.
 
 ## View Logs
 ```powershell
