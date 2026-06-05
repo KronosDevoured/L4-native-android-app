@@ -74,6 +74,8 @@ public final class L4PhysicsEngine {
         boolean isDirectionalDAR = isDARActive && !isFreeAirRoll;
         // "noInput": all physical inputs released and DAR not active → apply damping
         boolean noInput = !hasStickInput && !isDARActive;
+        boolean farCenteredNoInput = isFreeAirRoll && !isDirectionalDAR && !hasStickInput;
+        boolean effectiveNoInput = noInput || farCenteredNoInput;
 
         // --- 1. Compute target angular velocities ---
         // Native body axes are parity-mapped as:
@@ -131,7 +133,7 @@ public final class L4PhysicsEngine {
         }
 
         // --- 2. PD control → angular acceleration (KP=200 for all axes always) ---
-        if (!noInput) {
+        if (!effectiveNoInput) {
             float ax = clamp(KP * (wx_des - w.x), -accelRoll,  accelRoll);
             float ay = clamp(KP * (wy_des - w.y), -accelYaw,   accelYaw);
             float az = clamp(KP * (wz_des - w.z), -accelPitch, accelPitch);
@@ -141,7 +143,7 @@ public final class L4PhysicsEngine {
         }
 
         // --- 3. Damping – only when noInput (DAR means always spinning, no decay) ---
-        if (noInput) {
+        if (effectiveNoInput) {
             float scale = (float) Math.exp(-(damp + brakeOnRelease) * adjustedDt);
             w.x *= scale;
             w.y *= scale;
