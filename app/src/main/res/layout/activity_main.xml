@@ -313,8 +313,7 @@
                         android:layout_height="wrap_content"
                         android:background="#2E2E2E"
                         android:orientation="vertical"
-                        android:padding="12dp"
-                        android:visibility="gone">
+                        android:padding="12dp">
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -324,12 +323,19 @@
                             android:textStyle="bold" />
 
                         <TextView
-                            android:id="@+id/viewHudPlaceholder"
+                            android:id="@+id/stickSizeValue"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="8dp"
-                            android:text="State and controls are implemented in this panel before layout polish."
+                            android:text="Stick Size: 100"
                             android:textColor="#DDDDDD" />
+
+                        <SeekBar
+                            android:id="@+id/stickSizeSeek"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:max="120"
+                            android:progress="40" />
                     </LinearLayout>
                 </LinearLayout>
             </ScrollView>

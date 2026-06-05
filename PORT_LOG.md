@@ -1,6 +1,14 @@
 # L4 Native Android Port Log
 
-_Last updated: 2026-04-02_
+_Last updated: 2026-06-04_
+
+## Sprint C / Ticket U50 - REN-002 Stick Size Narrow Implementation (2026-06-04)
+
+### Closure note
+1. Added persisted `stickSize` setting with range `60..180` and default `100`.
+2. Added View & HUD `Stick Size` label/value and slider.
+3. Applied mapping to touch joystick radius only: `(stickSize / 100f) * (50dp * density)`.
+4. At `stickSize=100`, baseline radius remains `50dp * density`.
 
 ## Purpose
 

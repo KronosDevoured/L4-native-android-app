@@ -43,6 +43,7 @@ public final class MainActivity extends Activity {
     private static final int NIGHT_BUTTON = Color.parseColor("#3A4554");
     private static final int DAY_BUTTON_ACTIVE = Color.parseColor("#3D74B8");
     private static final int NIGHT_BUTTON_ACTIVE = Color.parseColor("#4C86CF");
+    private static final int DEFAULT_STICK_SIZE = 100;
 
     private L4SurfaceView surfaceView;
     private SettingsManager settingsManager;
@@ -149,6 +150,8 @@ public final class MainActivity extends Activity {
         TextView gpRightStickDeadzoneValue = findViewById(R.id.gpRightStickDeadzoneValue);
         SeekBar gpLeftStickDeadzoneSeek = findViewById(R.id.gpLeftStickDeadzoneSeek);
         SeekBar gpRightStickDeadzoneSeek = findViewById(R.id.gpRightStickDeadzoneSeek);
+        TextView stickSizeValue = findViewById(R.id.stickSizeValue);
+        SeekBar stickSizeSeek = findViewById(R.id.stickSizeSeek);
         TextView dynamicsAccelSummary = findViewById(R.id.dynamicsAccelSummary);
         TextView dynamicsDampSummary = findViewById(R.id.dynamicsDampSummary);
 
@@ -270,6 +273,28 @@ public final class MainActivity extends Activity {
             });
         }
 
+        if (stickSizeSeek != null) {
+            int initialStickSize = settingsManager != null ? settingsManager.getStickSize() : DEFAULT_STICK_SIZE;
+            stickSizeSeek.setProgress(initialStickSize - 60);
+            updateStickSizeText(stickSizeValue, initialStickSize);
+            applyStickSizeToInputController();
+            stickSizeSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    int value = 60 + progress;
+                    settingsManager.setStickSize(value);
+                    updateStickSizeText(stickSizeValue, settingsManager.getStickSize());
+                    applyStickSizeToInputController();
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) { }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) { }
+            });
+        }
+
         updateDynamicsSummary(dynamicsAccelSummary, dynamicsDampSummary);
 
         String[] carBodies = new String[] { "octane", "fennec", "dominus" };
@@ -347,6 +372,21 @@ public final class MainActivity extends Activity {
 
     private void updateDeadzoneText(TextView deadzoneValue, float deadzone) {
         deadzoneValue.setText(String.format(Locale.US, "Touch Deadzone: %.2f", deadzone));
+    }
+
+    private void updateStickSizeText(TextView stickSizeValue, int stickSize) {
+        if (stickSizeValue != null) {
+            stickSizeValue.setText(String.format(Locale.US, "Stick Size: %d", stickSize));
+        }
+    }
+
+    private void applyStickSizeToInputController() {
+        if (surfaceView == null) {
+            return;
+        }
+        if (surfaceView.getInputController() != null) {
+            surfaceView.getInputController().applyConfiguredStickSize();
+        }
     }
 
     private void updateLabeledValueText(TextView textView, String label, float value) {
@@ -449,6 +489,7 @@ public final class MainActivity extends Activity {
         applySeekBarTheme(findViewById(R.id.touchDeadzoneSeek), nightMode);
         applySeekBarTheme(findViewById(R.id.gpLeftStickDeadzoneSeek), nightMode);
         applySeekBarTheme(findViewById(R.id.gpRightStickDeadzoneSeek), nightMode);
+        applySeekBarTheme(findViewById(R.id.stickSizeSeek), nightMode);
 
         if (carBodySpinner != null) {
             carBodySpinner.setBackgroundTintList(ColorStateList.valueOf(nightMode ? NIGHT_BUTTON : DAY_BUTTON));
