@@ -15,10 +15,13 @@
 - Physics constants match web source.
 - Deterministic fixed-step update loop produces parity-tolerant outputs.
 - Input mappings and DAR behavior match web implementation.
+- Any gameplay action remains bindable to any supported gamepad button/trigger/axis.
+- No launch-time auto-migration silently changes user-configured input bindings.
 
 ## Gate D: Persistence Integrity
 - Settings survive app restart.
 - Settings survive process death and recreation.
+- Persisted user bindings remain stable across launch unless the user explicitly triggers reset/preset/profile actions.
 
 ## Gate E: Performance Integrity
 - Stable frame pacing on API 29+ target device.

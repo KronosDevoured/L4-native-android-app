@@ -1,5 +1,17 @@
 # Android Native L4 - Current Build Status & Workaround Guide
 
+## Document Authority Notice
+
+This file contains historical status context and troubleshooting notes.
+
+For current implementation decisions and next steps, use:
+
+1. `PORT_SPEC.md` (product constraints)
+2. `PORTING_GATES.md` (gate criteria)
+3. `PORT_LOG.md` (active execution state)
+
+If this file conflicts with those documents, treat this file as historical and follow the three documents above.
+
 ## Summary
 The native Android port of L4 DAR has been successfully built, deployed, and is running on your Samsung device. **Rendering and physics are 100% operational.** However, **ALL user input (touch, gamepad, keyboard) is blocked by the Android system** from reaching the app's Java code.
 
