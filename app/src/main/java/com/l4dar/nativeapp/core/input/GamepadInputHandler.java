@@ -109,9 +109,21 @@ public final class GamepadInputHandler {
             return false;
         }
 
+        int steerXAxis = settings.getGpBindSteerX();
+        int steerYAxis = settings.getGpBindSteerY();
+        if (!settings.isGpRightStickSteerEnabled()) {
+            // Never let camera/right-stick bound axes contribute to steering unless explicitly enabled.
+            if (isCameraAxis(steerXAxis)) {
+                steerXAxis = -1;
+            }
+            if (isCameraAxis(steerYAxis)) {
+                steerYAxis = -1;
+            }
+        }
+
         // Left stick (bindable) with source-aligned per-stick deadzone handling.
-        float lx = getCenteredAxis(event, settings.getGpBindSteerX());
-        float ly = getCenteredAxis(event, settings.getGpBindSteerY());
+        float lx = getCenteredAxis(event, steerXAxis);
+        float ly = getCenteredAxis(event, steerYAxis);
         float leftMagnitude = (float) Math.hypot(lx, ly);
         if (leftMagnitude > getLeftStickDeadzone()) {
             leftStickX = lx;
@@ -229,7 +241,16 @@ public final class GamepadInputHandler {
         return false;
     }
 
+    private boolean isCameraAxis(int axis) {
+        int cameraX = settings.getGpBindCameraX();
+        int cameraY = settings.getGpBindCameraY();
+        return axis == cameraX || axis == cameraY;
+    }
+
     private float getCenteredAxis(MotionEvent event, int axis) {
+        if (axis < 0) {
+            return 0f;
+        }
         android.view.InputDevice.MotionRange motionRange = event.getDevice().getMotionRange(axis, event.getSource());
         if (motionRange == null) {
             return 0f;
@@ -255,6 +276,9 @@ public final class GamepadInputHandler {
     }
 
     private float getPositiveAxis(MotionEvent event, int axis, float deadzone) {
+        if (axis < 0) {
+            return 0f;
+        }
         float value = event.getAxisValue(axis);
         if (value < deadzone) {
             return 0f;

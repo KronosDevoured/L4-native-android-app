@@ -38,6 +38,7 @@ public final class SettingsManager {
     private static final String KEY_GP_BIND_AIRROLL_LEFT = "gpBindAirRollLeft";
     private static final String KEY_GP_BIND_AIRROLL_RIGHT = "gpBindAirRollRight";
     private static final String KEY_GP_BIND_ROLL_FREE = "gpBindRollFree";
+    private static final String KEY_GP_ALLOW_RIGHT_STICK_STEER = "gpAllowRightStickSteer";
 
     private final SharedPreferences prefs;
 
@@ -58,17 +59,18 @@ public final class SettingsManager {
     private float gpRightStickDeadzone = 0.15f;
     private int stickSize = 100;
 
-    // Gamepad binding defaults aligned to the web source parity audit
+    // Gamepad binding defaults aligned to authoritative controller ownership.
     private int gpBindSteerX = MotionEvent.AXIS_X;
     private int gpBindSteerY = MotionEvent.AXIS_Y;
     private int gpBindCameraX = MotionEvent.AXIS_Z;
     private int gpBindCameraY = MotionEvent.AXIS_RZ;
     private int gpBindThrottleForward = MotionEvent.AXIS_RTRIGGER;
     private int gpBindThrottleReverse = MotionEvent.AXIS_LTRIGGER;
-    private int gpBindToggleDar = KeyEvent.KEYCODE_BUTTON_B;
-    private int gpBindAirRollLeft = KeyEvent.KEYCODE_BUTTON_R1;
-    private int gpBindAirRollRight = KeyEvent.KEYCODE_BUTTON_L1;
-    private int gpBindRollFree = KeyEvent.KEYCODE_BUTTON_R2;
+    private int gpBindToggleDar = KeyEvent.KEYCODE_BUTTON_A;
+    private int gpBindAirRollLeft = KeyEvent.KEYCODE_BUTTON_X;
+    private int gpBindAirRollRight = KeyEvent.KEYCODE_BUTTON_B;
+    private int gpBindRollFree = KeyEvent.KEYCODE_BUTTON_L1;
+    private boolean gpAllowRightStickSteer = false;
 
     public SettingsManager(Context context) {
         prefs = context.getSharedPreferences(PREF_FILE, Context.MODE_PRIVATE);
@@ -109,10 +111,11 @@ public final class SettingsManager {
         gpBindCameraY = prefs.getInt(KEY_GP_BIND_CAMERA_Y, MotionEvent.AXIS_RZ);
         gpBindThrottleForward = prefs.getInt(KEY_GP_BIND_THROTTLE_FWD, MotionEvent.AXIS_RTRIGGER);
         gpBindThrottleReverse = prefs.getInt(KEY_GP_BIND_THROTTLE_REV, MotionEvent.AXIS_LTRIGGER);
-        gpBindToggleDar = prefs.getInt(KEY_GP_BIND_TOGGLE_DAR, KeyEvent.KEYCODE_BUTTON_B);
-        gpBindAirRollLeft = prefs.getInt(KEY_GP_BIND_AIRROLL_LEFT, KeyEvent.KEYCODE_BUTTON_R1);
-        gpBindAirRollRight = prefs.getInt(KEY_GP_BIND_AIRROLL_RIGHT, KeyEvent.KEYCODE_BUTTON_L1);
-        gpBindRollFree = prefs.getInt(KEY_GP_BIND_ROLL_FREE, KeyEvent.KEYCODE_BUTTON_R2);
+        gpBindToggleDar = prefs.getInt(KEY_GP_BIND_TOGGLE_DAR, KeyEvent.KEYCODE_BUTTON_A);
+        gpBindAirRollLeft = prefs.getInt(KEY_GP_BIND_AIRROLL_LEFT, KeyEvent.KEYCODE_BUTTON_X);
+        gpBindAirRollRight = prefs.getInt(KEY_GP_BIND_AIRROLL_RIGHT, KeyEvent.KEYCODE_BUTTON_B);
+        gpBindRollFree = prefs.getInt(KEY_GP_BIND_ROLL_FREE, KeyEvent.KEYCODE_BUTTON_L1);
+        gpAllowRightStickSteer = prefs.getBoolean(KEY_GP_ALLOW_RIGHT_STICK_STEER, false);
     }
 
     public void save() {
@@ -143,6 +146,7 @@ public final class SettingsManager {
             .putInt(KEY_GP_BIND_AIRROLL_LEFT, gpBindAirRollLeft)
             .putInt(KEY_GP_BIND_AIRROLL_RIGHT, gpBindAirRollRight)
             .putInt(KEY_GP_BIND_ROLL_FREE, gpBindRollFree)
+            .putBoolean(KEY_GP_ALLOW_RIGHT_STICK_STEER, gpAllowRightStickSteer)
             .apply();
     }
 
@@ -266,6 +270,41 @@ public final class SettingsManager {
 
     public int getGpBindRollFree() {
         return gpBindRollFree;
+    }
+
+    public void setGpBindToggleDar(int value) {
+        gpBindToggleDar = value;
+    }
+
+    public void setGpBindRollFree(int value) {
+        gpBindRollFree = value;
+    }
+
+    public boolean isGpRightStickSteerEnabled() {
+        return gpAllowRightStickSteer;
+    }
+
+    public void setGpRightStickSteerEnabled(boolean value) {
+        gpAllowRightStickSteer = value;
+    }
+
+    public String getReservedGamepadBindingConflictSummary() {
+        StringBuilder conflicts = new StringBuilder();
+        appendReservedConflict(conflicts, "Toggle DAR", gpBindToggleDar);
+        appendReservedConflict(conflicts, "Air Roll Left", gpBindAirRollLeft);
+        appendReservedConflict(conflicts, "Air Roll Right", gpBindAirRollRight);
+        appendReservedConflict(conflicts, "Air Roll Free", gpBindRollFree);
+        return conflicts.toString();
+    }
+
+    private void appendReservedConflict(StringBuilder conflicts, String actionName, int keyCode) {
+        if (keyCode != KeyEvent.KEYCODE_BACK) {
+            return;
+        }
+        if (conflicts.length() > 0) {
+            conflicts.append("; ");
+        }
+        conflicts.append(actionName).append(" uses reserved Back");
     }
 
     public void setGpBindingAxes(int steerX, int steerY, int cameraX, int cameraY, int throttleForward, int throttleReverse) {

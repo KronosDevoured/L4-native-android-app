@@ -1,5 +1,6 @@
 package com.l4dar.nativeapp;
 
+import android.app.AlertDialog;
 import android.app.Activity;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.KeyEvent;
+import android.view.InputDevice;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
@@ -20,6 +22,9 @@ import android.widget.FrameLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
 
 import com.l4dar.nativeapp.core.settings.SettingsManager;
 import com.l4dar.nativeapp.render.L4SurfaceView;
@@ -44,6 +49,7 @@ public final class MainActivity extends Activity {
     private static final int DAY_BUTTON_ACTIVE = Color.parseColor("#3D74B8");
     private static final int NIGHT_BUTTON_ACTIVE = Color.parseColor("#4C86CF");
     private static final int DEFAULT_STICK_SIZE = 100;
+    private static final long BACK_EXIT_ARM_TIMEOUT_MS = 2500L;
 
     private L4SurfaceView surfaceView;
     private SettingsManager settingsManager;
@@ -53,7 +59,15 @@ public final class MainActivity extends Activity {
     private Spinner carBodySpinner;
     private ArrayAdapter<String> carBodyAdapter;
     private TextView darModeLabel;
+    private boolean startPressed = false;
+    private boolean sharePressed = false;
+    private boolean backExitArmed = false;
+    private boolean exitingFromDialog = false;
+    private boolean gameplayPausedForExitDialog = false;
+    private AlertDialog exitConfirmationDialog;
+    private OnBackInvokedCallback backInvokedCallback;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
+    private final Runnable disarmBackExitRunnable = () -> backExitArmed = false;
     private final Runnable darBadgeRefresh = new Runnable() {
         @Override
         public void run() {
@@ -107,12 +121,7 @@ public final class MainActivity extends Activity {
             ringModeCloseBtn.setOnClickListener(v -> ringModeOverlay.setVisibility(View.GONE));
         }
         themeBtn.setOnClickListener(v -> {
-            boolean nextNightMode = !settingsManager.isNightMode();
-            settingsManager.setNightMode(nextNightMode);
-            applyTheme(nextNightMode);
-            if (surfaceView != null) {
-                surfaceView.setNightMode(nextNightMode);
-            }
+            toggleThemeMode();
         });
 
         menuOverlay.setOnClickListener(v -> menuOverlay.setVisibility(View.GONE));
@@ -133,6 +142,14 @@ public final class MainActivity extends Activity {
         setupMenuControls();
         applyTheme(settingsManager.isNightMode());
         positionDarModeBadge();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            backInvokedCallback = this::handleDeviceBackPressed;
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT,
+                backInvokedCallback
+            );
+        }
     }
 
     private void setupMenuControls() {
@@ -403,13 +420,18 @@ public final class MainActivity extends Activity {
         String rollLeft = formatGamepadBindingLabel(settingsManager.getGpBindAirRollLeft());
         String rollRight = formatGamepadBindingLabel(settingsManager.getGpBindAirRollRight());
         String rollFree = formatGamepadBindingLabel(settingsManager.getGpBindRollFree());
-        textView.setText(String.format(
+        String summary = String.format(
             Locale.US,
             "Default bindings: Toggle DAR = %s · Air Roll Left = %s · Air Roll Right = %s · Air Roll (Free) = %s",
             toggleDar,
             rollLeft,
             rollRight,
-            rollFree));
+            rollFree);
+        String reservedConflict = settingsManager.getReservedGamepadBindingConflictSummary();
+        if (!reservedConflict.isEmpty()) {
+            summary = summary + "\nConflict: " + reservedConflict;
+        }
+        textView.setText(summary);
     }
 
     private void updateDynamicsSummary(TextView accelSummary, TextView dampSummary) {
@@ -652,14 +674,228 @@ public final class MainActivity extends Activity {
     }
 
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_MENU || keyCode == KeyEvent.KEYCODE_BUTTON_START) {
-            if (menuOverlay != null) {
-                menuOverlay.setVisibility(View.VISIBLE);
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        int keyCode = event.getKeyCode();
+
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            if (isStartMenuToggleKey(keyCode, event)) {
+                if (!startPressed) {
+                    startPressed = true;
+                    toggleMenuOverlay();
+                }
+                return true;
             }
+
+            if (isShareThemeToggleKey(keyCode, event)) {
+                if (!sharePressed) {
+                    sharePressed = true;
+                    toggleThemeMode();
+                }
+                return true;
+            }
+
+            if (isMenuOpen() && keyCode == KeyEvent.KEYCODE_BUTTON_B) {
+                closeMenuOverlay();
+                return true;
+            }
+
+            if (isMenuOpen() && isGamepadEvent(event) && keyCode == KeyEvent.KEYCODE_BACK) {
+                closeMenuOverlay();
+                return true;
+            }
+        } else if (event.getAction() == KeyEvent.ACTION_UP) {
+            if (isStartMenuToggleKey(keyCode, event)) {
+                startPressed = false;
+                return true;
+            }
+
+            if (isShareThemeToggleKey(keyCode, event)) {
+                sharePressed = false;
+                return true;
+            }
+
+            if (isMenuOpen() && keyCode == KeyEvent.KEYCODE_BUTTON_B) {
+                return true;
+            }
+
+            if (isMenuOpen() && isGamepadEvent(event) && keyCode == KeyEvent.KEYCODE_BACK) {
+                return true;
+            }
+        }
+
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        return super.onKeyUp(keyCode, event);
+    }
+
+    @Override
+    public void onBackPressed() {
+        handleDeviceBackPressed();
+    }
+
+    private void handleDeviceBackPressed() {
+        if (isMenuOpen()) {
+            closeMenuOverlay();
+            return;
+        }
+
+        if (isExitDialogShowing()) {
+            return;
+        }
+
+        if (!backExitArmed) {
+            armBackExitState();
+            Toast.makeText(this, "Press Back again to exit", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        cancelBackExitArmTimeout();
+        showExitConfirmationDialog();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && backInvokedCallback != null) {
+            getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(backInvokedCallback);
+            backInvokedCallback = null;
+        }
+        super.onDestroy();
+    }
+
+    private boolean isGamepadEvent(KeyEvent event) {
+        int source = event.getSource();
+        return (source & InputDevice.SOURCE_GAMEPAD) != 0
+                || (source & InputDevice.SOURCE_JOYSTICK) != 0;
+    }
+
+    private boolean isStartMenuToggleKey(int keyCode, KeyEvent event) {
+        return keyCode == KeyEvent.KEYCODE_BUTTON_START;
+    }
+
+    private boolean isShareThemeToggleKey(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_MENU) {
             return true;
         }
-        return super.onKeyDown(keyCode, event);
+        return isGamepadEvent(event)
+                && (keyCode == KeyEvent.KEYCODE_BUTTON_SELECT || keyCode == KeyEvent.KEYCODE_BUTTON_MODE);
+    }
+
+    private void toggleThemeMode() {
+        boolean nextNightMode = !settingsManager.isNightMode();
+        settingsManager.setNightMode(nextNightMode);
+        applyTheme(nextNightMode);
+        if (surfaceView != null) {
+            surfaceView.setNightMode(nextNightMode);
+        }
+    }
+
+    private boolean isMenuOpen() {
+        return menuOverlay != null && menuOverlay.getVisibility() == View.VISIBLE;
+    }
+
+    private void openMenuOverlay() {
+        if (menuOverlay != null) {
+            menuOverlay.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void closeMenuOverlay() {
+        if (menuOverlay != null) {
+            menuOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    private void toggleMenuOverlay() {
+        if (isMenuOpen()) {
+            closeMenuOverlay();
+        } else {
+            openMenuOverlay();
+        }
+    }
+
+    private void showExitConfirmationDialog() {
+        if (isExitDialogShowing()) {
+            return;
+        }
+
+        exitingFromDialog = false;
+        cancelBackExitArmTimeout();
+        pauseGameplayForExitDialog();
+        exitConfirmationDialog = new AlertDialog.Builder(this)
+            .setTitle("Leave app?")
+            .setMessage("Do you want to exit the app?")
+            .setPositiveButton("Yes", (dialog, which) -> {
+                exitingFromDialog = true;
+                clearBackExitState();
+                requestExplicitAppExit();
+            })
+            .setNegativeButton("No", (dialog, which) -> {
+                exitingFromDialog = false;
+                clearBackExitState();
+                dialog.dismiss();
+            })
+            .setCancelable(false)
+            .create();
+        exitConfirmationDialog.setOnDismissListener(dialog -> {
+            exitConfirmationDialog = null;
+            if (!exitingFromDialog && !isFinishing()) {
+                resumeGameplayAfterExitDialog();
+            }
+        });
+        exitConfirmationDialog.show();
+    }
+
+    private void requestExplicitAppExit() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            finishAndRemoveTask();
+            return;
+        }
+        finishAffinity();
+        finish();
+    }
+
+    private boolean isExitDialogShowing() {
+        return exitConfirmationDialog != null && exitConfirmationDialog.isShowing();
+    }
+
+    private void pauseGameplayForExitDialog() {
+        if (surfaceView == null || gameplayPausedForExitDialog) {
+            return;
+        }
+        surfaceView.onPause();
+        gameplayPausedForExitDialog = true;
+    }
+
+    private void resumeGameplayAfterExitDialog() {
+        if (surfaceView == null || !gameplayPausedForExitDialog) {
+            return;
+        }
+        surfaceView.onResume();
+        surfaceView.requestFocus();
+        gameplayPausedForExitDialog = false;
+    }
+
+    private void clearBackExitState() {
+        backExitArmed = false;
+        cancelBackExitArmTimeout();
+    }
+
+    private void armBackExitState() {
+        backExitArmed = true;
+        cancelBackExitArmTimeout();
+        uiHandler.postDelayed(disarmBackExitRunnable, BACK_EXIT_ARM_TIMEOUT_MS);
+    }
+
+    private void cancelBackExitArmTimeout() {
+        uiHandler.removeCallbacks(disarmBackExitRunnable);
     }
 
     @Override

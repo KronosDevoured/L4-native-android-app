@@ -151,10 +151,14 @@ public class InputController {
     }
 
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if ((event.getSource() & android.view.InputDevice.SOURCE_GAMEPAD) != 0
-                || (event.getSource() & android.view.InputDevice.SOURCE_JOYSTICK) != 0) {
+        if (isGamepadEvent(event) || isConfiguredGamepadBinding(keyCode)) {
             inputSource = InputSource.GAMEPAD;
-            return gamepadHandler.onKeyDown(keyCode, event);
+            boolean handled = gamepadHandler.onKeyDown(keyCode, event);
+            if (handled) {
+                return true;
+            }
+            return isGamepadEvent(event)
+                    && (keyCode == KeyEvent.KEYCODE_BUTTON_B || keyCode == KeyEvent.KEYCODE_BACK);
         }
 
         inputSource = InputSource.KEYBOARD;
@@ -162,12 +166,34 @@ public class InputController {
     }
 
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if ((event.getSource() & android.view.InputDevice.SOURCE_GAMEPAD) != 0
-                || (event.getSource() & android.view.InputDevice.SOURCE_JOYSTICK) != 0) {
-            return gamepadHandler.onKeyUp(keyCode, event);
+        if (isGamepadEvent(event) || isConfiguredGamepadBinding(keyCode)) {
+            boolean handled = gamepadHandler.onKeyUp(keyCode, event);
+            if (handled) {
+                return true;
+            }
+            return isGamepadEvent(event)
+                    && (keyCode == KeyEvent.KEYCODE_BUTTON_B || keyCode == KeyEvent.KEYCODE_BACK);
         }
 
         return keyboardHandler.onKeyUp(keyCode);
+    }
+
+    private boolean isGamepadEvent(KeyEvent event) {
+        int source = event.getSource();
+        return (source & android.view.InputDevice.SOURCE_GAMEPAD) != 0
+                || (source & android.view.InputDevice.SOURCE_JOYSTICK) != 0;
+    }
+
+    private boolean isConfiguredGamepadBinding(int keyCode) {
+        return keyCode == settings.getGpBindToggleDar()
+                || keyCode == settings.getGpBindAirRollLeft()
+                || keyCode == settings.getGpBindAirRollRight()
+                || keyCode == settings.getGpBindRollFree()
+                || keyCode == KeyEvent.KEYCODE_BUTTON_START
+                || keyCode == KeyEvent.KEYCODE_BUTTON_SELECT
+                || keyCode == KeyEvent.KEYCODE_BUTTON_MODE
+                || keyCode == KeyEvent.KEYCODE_MENU
+                || keyCode == KeyEvent.KEYCODE_BUTTON_B;
     }
 
     /**

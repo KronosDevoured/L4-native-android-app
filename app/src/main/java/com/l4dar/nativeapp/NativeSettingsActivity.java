@@ -42,7 +42,7 @@ public final class NativeSettingsActivity extends Activity {
         root.addView(title);
 
         TextView help = new TextView(this);
-        help.setText("Use Android key/axis constants. Example defaults: AXIS_X=0, AXIS_Y=1, AXIS_Z=11, AXIS_RZ=14, AXIS_LTRIGGER=17, AXIS_RTRIGGER=18, X=99, B=97.");
+        help.setText("Use Android key/axis constants. Example defaults: AXIS_X=0, AXIS_Y=1, AXIS_Z=11, AXIS_RZ=14, AXIS_LTRIGGER=17, AXIS_RTRIGGER=18, X=99, B=97. Right-stick steering requires explicit enable (0/1 field below).");
         help.setPadding(0, 12, 0, 18);
         root.addView(help);
 
@@ -52,8 +52,11 @@ public final class NativeSettingsActivity extends Activity {
         addNumberField(root, "Camera Y Axis", "cameraY", settings.getGpBindCameraY());
         addNumberField(root, "Throttle Forward Axis", "throttleFwd", settings.getGpBindThrottleForward());
         addNumberField(root, "Throttle Reverse Axis", "throttleRev", settings.getGpBindThrottleReverse());
+        addNumberField(root, "Toggle DAR Button", "toggleDar", settings.getGpBindToggleDar());
         addNumberField(root, "Air Roll Left Button", "airRollLeft", settings.getGpBindAirRollLeft());
         addNumberField(root, "Air Roll Right Button", "airRollRight", settings.getGpBindAirRollRight());
+        addNumberField(root, "FAR / Free Air Roll Button", "rollFree", settings.getGpBindRollFree());
+        addNumberField(root, "Allow Right Stick Steering (0/1)", "allowRightSteer", settings.isGpRightStickSteerEnabled() ? 1 : 0);
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
@@ -101,8 +104,11 @@ public final class NativeSettingsActivity extends Activity {
         setField("cameraY", 14);
         setField("throttleFwd", 18);
         setField("throttleRev", 17);
-        setField("airRollLeft", 99);
-        setField("airRollRight", 97);
+        setField("toggleDar", android.view.KeyEvent.KEYCODE_BUTTON_A);
+        setField("airRollLeft", android.view.KeyEvent.KEYCODE_BUTTON_X);
+        setField("airRollRight", android.view.KeyEvent.KEYCODE_BUTTON_B);
+        setField("rollFree", android.view.KeyEvent.KEYCODE_BUTTON_L1);
+        setField("allowRightSteer", 0);
     }
 
     private void setField(String key, int value) {
@@ -137,12 +143,23 @@ public final class NativeSettingsActivity extends Activity {
         int cameraY = parseField("cameraY", settings.getGpBindCameraY());
         int throttleFwd = parseField("throttleFwd", settings.getGpBindThrottleForward());
         int throttleRev = parseField("throttleRev", settings.getGpBindThrottleReverse());
+        int toggleDar = parseField("toggleDar", settings.getGpBindToggleDar());
         int airRollLeft = parseField("airRollLeft", settings.getGpBindAirRollLeft());
         int airRollRight = parseField("airRollRight", settings.getGpBindAirRollRight());
+        int rollFree = parseField("rollFree", settings.getGpBindRollFree());
+        int allowRightSteer = parseField("allowRightSteer", settings.isGpRightStickSteerEnabled() ? 1 : 0);
 
         settings.setGpBindingAxes(steerX, steerY, cameraX, cameraY, throttleFwd, throttleRev);
         settings.setGpBindingButtons(airRollLeft, airRollRight);
+        settings.setGpBindToggleDar(toggleDar);
+        settings.setGpBindRollFree(rollFree);
+        settings.setGpRightStickSteerEnabled(allowRightSteer != 0);
         settings.save();
+
+        String reservedConflict = settings.getReservedGamepadBindingConflictSummary();
+        if (!reservedConflict.isEmpty()) {
+            Toast.makeText(this, "Binding conflict: " + reservedConflict, Toast.LENGTH_LONG).show();
+        }
         if (hadInvalidInput) {
             Toast.makeText(this, "Some invalid values were replaced with previous settings.", Toast.LENGTH_SHORT).show();
         }
