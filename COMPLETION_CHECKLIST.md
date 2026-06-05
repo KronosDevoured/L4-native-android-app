@@ -1,5 +1,15 @@
 # Android Native L4 - Completion Checklist
 
+## Document Authority Notice
+
+This checklist tracks completion status and verification snapshots.
+
+For current project direction, constraints, and next-step planning, prioritize:
+
+1. `PORT_SPEC.md`
+2. `PORTING_GATES.md`
+3. `PORT_LOG.md`
+
 ## ✅ Deliverables
 
 ### Code Implemented
