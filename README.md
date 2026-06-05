@@ -24,6 +24,15 @@ Primary references:
 - ../docs/js/modules/settings.js
 - ../docs/js/main.js
 
+## Product Guardrail: Binding Ownership
+
+Input binding ownership belongs to the user after configuration.
+
+1. Any gameplay action may be bound to any supported gamepad button, trigger, or axis.
+2. Runtime systems must not silently remap or migrate user bindings during normal launch.
+3. Automatic setting rewrites are allowed only for explicit user-driven actions (for example: pressing reset, applying a preset, importing a profile).
+4. Before introducing a convenience feature, evaluate whether it can fundamentally change final product behavior; reject or redesign if it can override user intent.
+
 ## Project Layout
 - app/src/main/java/com/l4dar/nativeapp/core/math: Native vector/quaternion primitives.
 - app/src/main/java/com/l4dar/nativeapp/core/physics: Physics constants and engine modules.
